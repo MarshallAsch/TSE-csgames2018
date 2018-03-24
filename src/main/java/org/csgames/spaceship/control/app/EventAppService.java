@@ -135,9 +135,9 @@ public class EventAppService {
         break;
       }
     }
-    
+
     if(!foundResource) {
-      resources.add(new ResourceObject((event.source, event.payload)));
+      resources.add(new ResourceObject(event.source, event.payload));
       sdk.getPlanetResourceService().registerResource(PlanetRegistry.CLASS_M, event.source);
     }
   }
