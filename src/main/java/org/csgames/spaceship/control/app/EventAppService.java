@@ -1,9 +1,7 @@
 package org.csgames.spaceship.control.app;
 
 import lombok.NonNull;
-import org.csgames.spaceship.sdk.Coordinates;
-import org.csgames.spaceship.sdk.Direction;
-import org.csgames.spaceship.sdk.SpaceshipSdk;
+import org.csgames.spaceship.sdk.*;
 import org.csgames.spaceship.sdk.service.PlanetRegistry;
 import org.csgames.spaceship.sdk.service.TeamStatus;
 
@@ -41,6 +39,11 @@ public class EventAppService {
 
         handleResourcesDiscovered(eventDto);
         break;
+      case "CHECK_SHIP_TEMPERATURE":
+
+        handleTemperature(eventDto);
+        break;
+
       case "DATA_MEASURED":
 
         // handle event telemetry, record if needed
@@ -258,6 +261,64 @@ public class EventAppService {
       default:
         return Direction.NONE;
     }
+  }
+
+  private void handleTemperature(EventDto event){/*Deals with the ship's temperature control*/
+    SpaceshipBlueprint blueprint = sdk.getSpaceshipService().readBlueprint();
+    SpaceshipRoom room;
+    double temperature = 0.0;
+
+    for(int i = 0; i < blueprint.rooms.size(); i++){/*loop through all the rooms*/
+      room = blueprint.rooms.get(i);/*Store the current room*/
+      /*Attempt to get the temperature of the current room*/
+      if(room.type.equals("habitable")) {/*if a penguin can live in this room*/
+        try {
+          temperature = sdk.getSpaceshipService().readRoomTemperature(room.roomNumber);
+          if(sdk.getSpaceshipService().roomTemperatureSensorUnit(room.roomNumber).equals("P")){/*in penguin degrees*/
+            temperature = (temperature * 9 / 5 + 32);/*convert to celsius*/
+          }
+        } catch (TemperatureSensorNotWorkingException e) {
+          temperature = sdk.getSpaceshipService().readMeanHabitableTemperature();
+        }
+        if (temperature > 0) {/*It's too hot, so open door, vents, and turn on AC*/
+          System.out.println("Room number > 0: " + room.roomNumber);
+          sdk.getSpaceshipService().openAirConditioning(room.roomNumber);
+          sdk.getSpaceshipService().openDoor(room.roomNumber);
+          sdk.getSpaceshipService().openVent(room.roomNumber);
+        } else if (temperature > -10) {/*It's too hot, so open doors and vents*/
+          System.out.println("Room number > -10: " + room.roomNumber);
+          sdk.getSpaceshipService().openDoor(room.roomNumber);
+          sdk.getSpaceshipService().openVent(room.roomNumber);
+        } else if (temperature < -10) {/*it's too cold so close everything*/
+          System.out.println("Room number < -10: " + room.roomNumber);
+          sdk.getSpaceshipService().closeAirConditioning(room.roomNumber);
+          sdk.getSpaceshipService().closeDoor(room.roomNumber);
+          sdk.getSpaceshipService().closeVent(room.roomNumber);
+          if(0 < -10){
+            System.out.println("Java lol");
+          }
+        }else if (temperature < -20){/*it's too cold so close everything except air conditioning*/
+          System.out.println("Room number < -20: " + room.roomNumber);
+          sdk.getSpaceshipService().closeDoor(room.roomNumber);
+          sdk.getSpaceshipService().closeVent(room.roomNumber);
+        }
+      } else {/*Cannot live in this room (freezer room)*/
+        try {
+          temperature = sdk.getSpaceshipService().readRoomTemperature(room.roomNumber);
+          if(sdk.getSpaceshipService().roomTemperatureSensorUnit(room.roomNumber).equals("P")){/*in penguin degrees*/
+            temperature = (temperature * 9 / 5 + 32);/*convert to celsius*/
+          }
+          if(temperature > -15){/*Room's too hot, open AC*/
+            sdk.getSpaceshipService().openAirConditioning(room.roomNumber);
+          } else if (temperature < -22){
+            sdk.getSpaceshipService().closeAirConditioning(room.roomNumber);
+          }
+        } catch (TemperatureSensorNotWorkingException e) {
+          sdk.getSpaceshipService().openAirConditioning(room.roomNumber);
+        }
+      }
+    }
+
   }
 
 }
