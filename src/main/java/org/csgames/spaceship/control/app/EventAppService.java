@@ -1,8 +1,9 @@
 package org.csgames.spaceship.control.app;
 
 import lombok.NonNull;
+import org.csgames.spaceship.sdk.Coordinates;
+import org.csgames.spaceship.sdk.Direction;
 import org.csgames.spaceship.sdk.SpaceshipSdk;
-import org.csgames.spaceship.sdk.service.AwayTeamLogService;
 import org.csgames.spaceship.sdk.service.PlanetRegistry;
 import org.csgames.spaceship.sdk.service.TeamStatus;
 
@@ -20,6 +21,11 @@ public class EventAppService {
 
   // this is the ArrayList that will store the locations of resources
   private ArrayList<ResourceObject> resources = new ArrayList<>();
+
+
+  // the locations of all of the teams
+  private HashMap<String, String> teamLocation = new HashMap<>();
+
 
   public EventAppService(SpaceshipSdk sdk) {
     this.sdk = sdk;
@@ -55,6 +61,11 @@ public class EventAppService {
       case "LOCATION_CHANGED":
           handleTrackLocation(eventDto);
           break;
+
+      case "PREDATORS_DETECTED":
+        runAway(eventDto);
+        break;
+
         default:
           // none
       }
@@ -134,15 +145,7 @@ public class EventAppService {
   // when a new resource is discovered, add it to the log and save its location
   private void handleResourcesDiscovered (EventDto event) {
 
-    Boolean foundResource = false;
-
-    //loops through the arrayList and compares the resources
-    for(int i = 0; i < resources.size(); i ++){
-      if(resources.get(i).getType().equals(event.source)){
-        foundResource = true;
-        break;
-      }
-    }
+    Boolean foundResource = hasFoundResourse(event.source);
 
     if(!foundResource) {
       resources.add(new ResourceObject(event.source, event.payload));
@@ -151,30 +154,110 @@ public class EventAppService {
   }
 
 
-  private HashMap<String, String> teamLocation = new HashMap<>();
 
   private void handleTrackLocation(EventDto event) {
 
     String team = event.source;
     String location  = event.payload;
 
-    if (teamLocation.containsKey(team) && teamLocation.get(team).equals(location)) {
-      // the location of the team has not changed
+    String lastLocation = getLastLocation(team);
 
-      sdk.getAwayTeamLogService().reportStatus(team, TeamStatus.STATIONARY);
-
+    if (lastLocation.equals("")) {
+      // new location
+      teamLocation.put(team, location);
     }
-    else if (teamLocation.containsKey(team) && !teamLocation.get(team).equals(location)) {
-      // the location of the team has changed
+    else if (lastLocation.equals(location)) {
+      // same location
+      sdk.getAwayTeamLogService().reportStatus(team, TeamStatus.STATIONARY);
+    }
+    else {
+      // moved
       sdk.getAwayTeamLogService().reportStatus(team, TeamStatus.MOVING);
       teamLocation.replace(team, location);
     }
-    else
-    {
-      teamLocation.put(team, location);
+  }
+
+
+  private String getLastLocation(String team) {
+
+    return teamLocation.getOrDefault(team, "");
+  }
+
+  private void runAway(EventDto event){
+    teamsInRange(event.payload);
+  }
+
+  private void teamsInRange(String dangerLocation) {
+
+    String location;
+    String team;
+    int distance;
+
+    Coordinates danger = new Coordinates(Double.parseDouble(dangerLocation.split(",")[0]), Double.parseDouble(dangerLocation.split(",")[1]));
+    Coordinates teamCoordinates;
+
+
+    Direction direction;
+
+
+    for (Map.Entry<String, String> entry: teamLocation.entrySet()) {
+
+      location = entry.getValue();
+      team = entry.getKey();
+
+      teamCoordinates = new Coordinates(Double.parseDouble(location.split(",")[0]), Double.parseDouble(location.split(",")[1]));
+
+      distance = sdk.getLocationService().distanceBetween(teamCoordinates, danger);
+
+      if (distance < 1000) {
+
+        direction = sdk.getLocationService().directionTo(teamCoordinates, danger);
+        Direction opposite = getOppositeDirection(direction);
+
+        sdk.getCommunicationService().moveTo(team, opposite, 1000);
+      }
+
+    }
+  }
+
+
+  private boolean hasFoundResourse(String resource){
+
+    //loops through the arrayList and compares the resources
+    for(int i = 0; i < resources.size(); i ++){
+      if(resources.get(i).getType().equals(resource)){
+        return true;
+      }
     }
 
+    return false;
+  }
 
+
+  // helper function that will tell you what direction the team should move in.
+  private Direction getOppositeDirection (Direction direction){
+
+    switch(direction){
+
+      case NORTH:
+        return Direction.SOUTH;
+      case SOUTH:
+        return Direction.NORTH;
+      case WEST:
+        return Direction.EAST;
+      case EAST:
+        return Direction.SOUTH;
+      case NORTH_EAST:
+        return Direction.SOUTH_WEST;
+      case NORTH_WEST:
+        return Direction.SOUTH_EAST;
+      case SOUTH_EAST:
+        return Direction.NORTH_WEST;
+      case SOUTH_WEST:
+        return Direction.NORTH_EAST;
+      default:
+        return Direction.NONE;
+    }
   }
 
 }
