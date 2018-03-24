@@ -1,5 +1,7 @@
 package org.csgames.spaceship.control.app;
 
+import org.csgames.spaceship.sdk.Coordinates;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,5 +65,48 @@ public class LocalStorage implements DataStorage {
     String oldVal = telemetry.put(mapKey, data);
 
     return oldVal == null || !oldVal.equals(data);
+  }
+
+
+
+  public Coordinates getFishLocation()
+  {
+    String location;
+    double latitude;
+    double longitude;
+
+    for (ResourceObject resource : resources) {
+
+      if (resource.getType().equals("Fish")) {
+        location = resource.getLocation();
+
+        latitude = Double.parseDouble(location.split(",")[0]);
+        longitude = Double.parseDouble(location.split(",")[1]);
+
+        return new Coordinates(latitude, longitude);
+      }
+    }
+
+    return null;
+  }
+
+  public Coordinates getWaterLocation()
+  {
+    String location;
+    double latitude;
+    double longitude;
+
+    for (ResourceObject resource : resources) {
+
+      if (resource.getType().equals("Water")) {
+        location = resource.getLocation();
+
+        latitude = Double.parseDouble(location.split(",")[0]);
+        longitude = Double.parseDouble(location.split(",")[1]);
+
+        return new Coordinates(latitude, longitude);
+      }
+    }
+    return null;
   }
 }

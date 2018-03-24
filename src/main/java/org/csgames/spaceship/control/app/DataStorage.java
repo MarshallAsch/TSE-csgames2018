@@ -1,5 +1,7 @@
 package org.csgames.spaceship.control.app;
 
+import org.csgames.spaceship.sdk.Coordinates;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,4 +31,10 @@ public interface DataStorage {
 
   // this will store the telemetry data, and will return true if it needs to be logged
   public boolean recordTelemetry(String team, String key, String data);
+
+
+  public Coordinates getWaterLocation();
+
+  public Coordinates getFishLocation();
+
 }

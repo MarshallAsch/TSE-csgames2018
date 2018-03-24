@@ -51,8 +51,22 @@ public class EventAppService {
   // This will send 20 fish and 15 units water
   private void handleOutOfSupplies (EventDto event) {
 
-    sdk.getSpaceshipService().sendFishTo(event.source, 20);
-    sdk.getSpaceshipService().sendWaterTo(event.source, 15);
+    try {
+      sdk.getSpaceshipService().sendFishTo(event.source, 20);
+    } catch (SpaceshipOutOfSuppliesException e) {
+
+      Coordinates fish = dataStorage.getFishLocation();
+      if (fish != null)
+      sdk.getCommunicationService().catchFish(event.source, fish);
+    }
+
+    try {
+      sdk.getSpaceshipService().sendWaterTo(event.source, 15);
+    } catch (SpaceshipOutOfSuppliesException e) {
+      Coordinates water = dataStorage.getWaterLocation();
+      if (water != null)
+        sdk.getCommunicationService().refillWater (event.source, water);
+    }
   }
 
   // This will send more supplies to the penguins when they are needed
@@ -69,12 +83,30 @@ public class EventAppService {
     int remainingWater = Integer.parseInt(parts[1]);
 
     // send food if needed
-    if (remainingFish < 5)
-      sdk.getSpaceshipService().sendFishTo(event.source, 15);
+    if (remainingFish < 5) {
+
+      try{
+        sdk.getSpaceshipService().sendFishTo(event.source, 15);
+      } catch (SpaceshipOutOfSuppliesException e) {
+        Coordinates fish = dataStorage.getFishLocation();
+        if (fish != null)
+
+          sdk.getCommunicationService().catchFish(event.source, fish);
+      }
+    }
 
     // send water if needed
-    if (remainingWater < 2)
-      sdk.getSpaceshipService().sendWaterTo(event.source, 10);
+    if (remainingWater < 2) {
+      try {
+        sdk.getSpaceshipService().sendWaterTo(event.source, 10);
+      } catch (SpaceshipOutOfSuppliesException e) {
+
+        Coordinates water = dataStorage.getWaterLocation();
+        if (water != null)
+          sdk.getCommunicationService().refillWater (event.source, water);
+      }
+
+    }
 
   }
 
