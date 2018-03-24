@@ -1,8 +1,6 @@
 package org.csgames.spaceship.control.app;
 
-import org.csgames.spaceship.sdk.Coordinates;
-import org.csgames.spaceship.sdk.Direction;
-import org.csgames.spaceship.sdk.SpaceshipSdk;
+import org.csgames.spaceship.sdk.*;
 import org.csgames.spaceship.sdk.service.PlanetRegistry;
 import org.csgames.spaceship.sdk.service.TeamStatus;
 import java.util.*;
@@ -41,6 +39,9 @@ public class EventAppService {
       case "PREDATORS_DETECTED":
         handleDanger(eventDto);
         break;
+        case "CHECK_SHIP_TEMPERATURE":
+          handleTemperature(eventDto);
+          break;
       default:
         // none
       }
@@ -171,6 +172,69 @@ public class EventAppService {
         sdk.getCommunicationService().moveTo(team, opposite, 1000);
       }
     }
+  }
+
+  private void handleTemperature(EventDto event){/*Deals with the ship's temperature control*/
+    SpaceshipBlueprint blueprint = sdk.getSpaceshipService().readBlueprint();
+
+    double tempature;
+
+    boolean failed;
+
+    for(SpaceshipRoom room : blueprint.rooms)
+    {
+      failed = false;
+      try {
+        tempature = sdk.getSpaceshipService().readRoomTemperature(room.roomNumber);
+
+        // convert penguin temp to celsius
+        if (sdk.getSpaceshipService().roomTemperatureSensorUnit(room.roomNumber).equals("P")) {
+          tempature =  - tempature * 9 / (double) 5 + 32;
+        }
+      } catch (TemperatureSensorNotWorkingException e) {
+        tempature = sdk.getSpaceshipService().readMeanHabitableTemperature();
+        failed = true;
+      }
+
+      if (room.type.equals("habitable"))
+      {
+        // temp is now in C
+
+        if (tempature > -10) {
+          sdk.getSpaceshipService().openDoor(room.roomNumber);
+          sdk.getSpaceshipService().openVent(room.roomNumber);
+        }
+
+        if (tempature < -20) {
+          sdk.getSpaceshipService().closeDoor(room.roomNumber);
+          sdk.getSpaceshipService().closeVent(room.roomNumber);
+        }
+
+
+        if (tempature > 0) {
+          sdk.getSpaceshipService().openAirConditioning(room.roomNumber);
+        }
+
+        if (tempature < -10) {
+          sdk.getSpaceshipService().closeAirConditioning(room.roomNumber);
+        }
+      }
+      else {
+
+        if (tempature > -15) {
+          sdk.getSpaceshipService().openAirConditioning(room.roomNumber);
+        }
+
+        if (tempature < -22) {
+          sdk.getSpaceshipService().closeAirConditioning(room.roomNumber);
+        }
+
+        if (failed) {
+          sdk.getSpaceshipService().openAirConditioning(room.roomNumber);
+        }
+      }
+    }
+
   }
 
   // helper function that will tell you what direction the team should move in.
