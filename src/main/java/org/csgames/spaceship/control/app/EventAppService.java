@@ -2,7 +2,10 @@ package org.csgames.spaceship.control.app;
 
 import lombok.NonNull;
 import org.csgames.spaceship.sdk.SpaceshipSdk;
+import org.csgames.spaceship.sdk.service.AwayTeamLogService;
 import org.csgames.spaceship.sdk.service.PlanetRegistry;
+import org.csgames.spaceship.sdk.service.TeamStatus;
+
 import java.util.HashMap;
 import java.util.*;
 
@@ -47,6 +50,10 @@ public class EventAppService {
 
           // send supplies to starving penguins.
           handleOutOfSupplies(eventDto);
+          break;
+
+      case "LOCATION_CHANGED":
+          handleTrackLocation(eventDto);
           break;
         default:
           // none
@@ -141,6 +148,33 @@ public class EventAppService {
       resources.add(new ResourceObject(event.source, event.payload));
       sdk.getPlanetResourceService().registerResource(PlanetRegistry.CLASS_M, event.source);
     }
+  }
+
+
+  private HashMap<String, String> teamLocation = new HashMap<>();
+
+  private void handleTrackLocation(EventDto event) {
+
+    String team = event.source;
+    String location  = event.payload;
+
+    if (teamLocation.containsKey(team) && teamLocation.get(team).equals(location)) {
+      // the location of the team has not changed
+
+      sdk.getAwayTeamLogService().reportStatus(team, TeamStatus.STATIONARY);
+
+    }
+    else if (teamLocation.containsKey(team) && !teamLocation.get(team).equals(location)) {
+      // the location of the team has changed
+      sdk.getAwayTeamLogService().reportStatus(team, TeamStatus.MOVING);
+      teamLocation.replace(team, location);
+    }
+    else
+    {
+      teamLocation.put(team, location);
+    }
+
+
   }
 
 }
