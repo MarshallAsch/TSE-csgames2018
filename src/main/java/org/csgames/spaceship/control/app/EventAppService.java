@@ -124,6 +124,7 @@ public class EventAppService {
   }
 
 
+  // when a new resource is discovered, add it to the log and save its location
   private void handleResourcesDiscovered (EventDto event) {
 
     Boolean foundResource = false;
@@ -143,3 +144,5 @@ public class EventAppService {
   }
 
 }
+
+
