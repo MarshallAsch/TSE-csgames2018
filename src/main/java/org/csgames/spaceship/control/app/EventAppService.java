@@ -1,5 +1,6 @@
 package org.csgames.spaceship.control.app;
 
+import com.sun.org.apache.xpath.internal.SourceTree;
 import lombok.NonNull;
 import org.csgames.spaceship.sdk.*;
 import org.csgames.spaceship.sdk.service.PlanetRegistry;
@@ -275,30 +276,29 @@ public class EventAppService {
         try {
           temperature = sdk.getSpaceshipService().readRoomTemperature(room.roomNumber);
           if(sdk.getSpaceshipService().roomTemperatureSensorUnit(room.roomNumber).equals("P")){/*in penguin degrees*/
-            temperature = (temperature * 9 / 5 + 32);/*convert to celsius*/
+            temperature = (temperature * 9 / (double) 5 + 32);/*convert to celsius*/
           }
         } catch (TemperatureSensorNotWorkingException e) {
           temperature = sdk.getSpaceshipService().readMeanHabitableTemperature();
         }
         if (temperature > 0) {/*It's too hot, so open door, vents, and turn on AC*/
-          System.out.println("Room number > 0: " + room.roomNumber);
           sdk.getSpaceshipService().openAirConditioning(room.roomNumber);
           sdk.getSpaceshipService().openDoor(room.roomNumber);
           sdk.getSpaceshipService().openVent(room.roomNumber);
+
         } else if (temperature > -10) {/*It's too hot, so open doors and vents*/
-          System.out.println("Room number > -10: " + room.roomNumber);
+          System.out.println("> -10 " + temperature + "room number: " + room.roomNumber+"\n");
           sdk.getSpaceshipService().openDoor(room.roomNumber);
           sdk.getSpaceshipService().openVent(room.roomNumber);
+
         } else if (temperature < -10) {/*it's too cold so close everything*/
-          System.out.println("Room number < -10: " + room.roomNumber);
+          System.out.println("< -10 " + temperature + "room number: " + room.roomNumber+"\n");
           sdk.getSpaceshipService().closeAirConditioning(room.roomNumber);
           sdk.getSpaceshipService().closeDoor(room.roomNumber);
           sdk.getSpaceshipService().closeVent(room.roomNumber);
-          if(0 < -10){
-            System.out.println("Java lol");
-          }
+
         }else if (temperature < -20){/*it's too cold so close everything except air conditioning*/
-          System.out.println("Room number < -20: " + room.roomNumber);
+
           sdk.getSpaceshipService().closeDoor(room.roomNumber);
           sdk.getSpaceshipService().closeVent(room.roomNumber);
         }

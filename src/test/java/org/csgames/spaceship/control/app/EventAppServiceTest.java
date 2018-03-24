@@ -10,5 +10,8 @@ public class EventAppServiceTest {
   @Test
   public void test() {
     // FIXME: Test the event app service
+    System.out.println("test");
+    assert true;
+    assert false;
   }
 }
