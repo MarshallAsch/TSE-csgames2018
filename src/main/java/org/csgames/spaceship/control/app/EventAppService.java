@@ -273,26 +273,30 @@ public class EventAppService {
       room = blueprint.rooms.get(i);/*Store the current room*/
       /*Attempt to get the temperature of the current room*/
       if(room.type.equals("habitable")) {/*if a penguin can live in this room*/
+
         try {
           temperature = sdk.getSpaceshipService().readRoomTemperature(room.roomNumber);
           if(sdk.getSpaceshipService().roomTemperatureSensorUnit(room.roomNumber).equals("P")){/*in penguin degrees*/
-            temperature = (temperature * 9 / (double) 5 + 32);/*convert to celsius*/
+            System.out.println("temperature before: " + temperature + " room number: " + room.roomNumber);
+            temperature = (((temperature * 9) / (double) 5) + 32);/*convert to celsius*/
+            System.out.println("temperature after: " + temperature + " room number: " + room.roomNumber);
           }
         } catch (TemperatureSensorNotWorkingException e) {
           temperature = sdk.getSpaceshipService().readMeanHabitableTemperature();
         }
+
         if (temperature > 0) {/*It's too hot, so open door, vents, and turn on AC*/
           sdk.getSpaceshipService().openAirConditioning(room.roomNumber);
           sdk.getSpaceshipService().openDoor(room.roomNumber);
           sdk.getSpaceshipService().openVent(room.roomNumber);
 
         } else if (temperature > -10) {/*It's too hot, so open doors and vents*/
-          System.out.println("> -10 " + temperature + "room number: " + room.roomNumber+"\n");
+          //System.out.println("> -10 " + temperature + "room number: " + room.roomNumber+"\n");
           sdk.getSpaceshipService().openDoor(room.roomNumber);
           sdk.getSpaceshipService().openVent(room.roomNumber);
 
         } else if (temperature < -10) {/*it's too cold so close everything*/
-          System.out.println("< -10 " + temperature + "room number: " + room.roomNumber+"\n");
+         // System.out.println("< -10 " + temperature + "room number: " + room.roomNumber+"\n");
           sdk.getSpaceshipService().closeAirConditioning(room.roomNumber);
           sdk.getSpaceshipService().closeDoor(room.roomNumber);
           sdk.getSpaceshipService().closeVent(room.roomNumber);
@@ -301,6 +305,8 @@ public class EventAppService {
 
           sdk.getSpaceshipService().closeDoor(room.roomNumber);
           sdk.getSpaceshipService().closeVent(room.roomNumber);
+          sdk.getSpaceshipService().closeAirConditioning(room.roomNumber);
+
         }
       } else {/*Cannot live in this room (freezer room)*/
         try {
