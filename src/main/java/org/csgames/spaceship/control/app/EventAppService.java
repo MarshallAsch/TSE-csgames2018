@@ -29,21 +29,24 @@ public class EventAppService {
 
         String dataKey = genTelemetryKey(eventDto);
 
-        if (telemetry.containsKey(dataKey) && telemetry.get(dataKey).equals(eventDto.payload)) {
+
+        // save the data
+        String dataName = eventDto.payload.split("=")[0];
+
+        if (telemetry.containsKey(dataKey) && telemetry.get(dataKey).equals(dataName)) {
           // the data is already there do nothing
         }
-        else if (telemetry.containsKey(dataKey) && !telemetry.get(dataKey).equals(eventDto.payload)) {
+        else if (telemetry.containsKey(dataKey) && !telemetry.get(dataKey).equals(dataName)) {
           // the data is already there the value needs to be updated
-          sdk.getAwayTeamLogService().reportMeasureData(eventDto.source, eventDto.payload);
+          sdk.getAwayTeamLogService().reportMeasureData(eventDto.source, dataName);
           telemetry.replace(dataKey, eventDto.payload);
         }
         else {
-          sdk.getAwayTeamLogService().reportMeasureData(eventDto.source, eventDto.payload);
+          sdk.getAwayTeamLogService().reportMeasureData(eventDto.source, dataName);
           telemetry.put(dataKey, eventDto.payload);
         }
 
-        // save the data
-        sdk.getAwayTeamLogService().reportMeasureData(eventDto.source, eventDto.payload);
+
         break;
       case "SUPPLY_CONSUMED":
 

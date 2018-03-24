@@ -52,5 +52,6 @@ public class EventHandlerTest {
     eventHandler.handle(request, response);
 
     verify(eventAppService).handleReceivedEvent(anEvent);
+
   }
 }
