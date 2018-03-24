@@ -6,27 +6,23 @@ import org.csgames.spaceship.sdk.Direction;
 import org.csgames.spaceship.sdk.SpaceshipSdk;
 import org.csgames.spaceship.sdk.service.PlanetRegistry;
 import org.csgames.spaceship.sdk.service.TeamStatus;
-
 import java.util.HashMap;
 import java.util.*;
-
 
 
 public class EventAppService {
 
   private SpaceshipSdk sdk;
 
-  // This is the hashmap for the telemetry data
+  // This is the HashMap for the telemetry data
   private HashMap<String, String> telemetry = new HashMap<>();
 
   // this is the ArrayList that will store the locations of resources
   private ArrayList<ResourceObject> resources = new ArrayList<>();
 
-
   // the locations of all of the teams
   private HashMap<String, String> teamLocation = new HashMap<>();
-
-
+  
   public EventAppService(SpaceshipSdk sdk) {
     this.sdk = sdk;
   }
@@ -38,41 +34,33 @@ public class EventAppService {
     switch (eventDto.type) {
 
       case "RESOURCE_DISCOVERED":
-
         handleResourcesDiscovered(eventDto);
         break;
       case "DATA_MEASURED":
-
         // handle event telemetry, record if needed
         handleTelemetry(eventDto);
         break;
       case "SUPPLY_CONSUMED":
-
         // send more supplies if needed
         handleSuppliesConsumed(eventDto);
         break;
-
-        case "OUT_OF_SUPPLIES":
-
-          // send supplies to starving penguins.
-          handleOutOfSupplies(eventDto);
-          break;
-
-      case "LOCATION_CHANGED":
-          handleTrackLocation(eventDto);
-          break;
-
-      case "PREDATORS_DETECTED":
-        runAway(eventDto);
+      case "OUT_OF_SUPPLIES":
+        // send supplies to starving penguins.
+        handleOutOfSupplies(eventDto);
         break;
-
-        default:
-          // none
+      case "LOCATION_CHANGED":
+        handleTrackLocation(eventDto);
+        break;
+      case "PREDATORS_DETECTED":
+        handleDanger(eventDto);
+        break;
+      default:
+        // none
       }
     }
 
 
-  // this will generate the key for the hashmap for storing telemetry
+  // this will generate the key for the HashMap for storing telemetry
   private @NonNull String genTelemetryKey(EventDto event) {
 
     String type = event.type;
@@ -145,7 +133,7 @@ public class EventAppService {
   // when a new resource is discovered, add it to the log and save its location
   private void handleResourcesDiscovered (EventDto event) {
 
-    Boolean foundResource = hasFoundResourse(event.source);
+    Boolean foundResource = hasFoundResource(event.source);
 
     if(!foundResource) {
       resources.add(new ResourceObject(event.source, event.payload));
@@ -153,8 +141,7 @@ public class EventAppService {
     }
   }
 
-
-
+  // Handel teh event when a team moves
   private void handleTrackLocation(EventDto event) {
 
     String team = event.source;
@@ -183,7 +170,7 @@ public class EventAppService {
     return teamLocation.getOrDefault(team, "");
   }
 
-  private void runAway(EventDto event){
+  private void handleDanger(EventDto event){
     teamsInRange(event.payload);
   }
 
@@ -192,23 +179,35 @@ public class EventAppService {
     String location;
     String team;
     int distance;
-
-    Coordinates danger = new Coordinates(Double.parseDouble(dangerLocation.split(",")[0]), Double.parseDouble(dangerLocation.split(",")[1]));
-    Coordinates teamCoordinates;
-
-
     Direction direction;
 
+    double latitude;
+    double longitude;
 
+    Coordinates teamCoordinates;
+    Coordinates danger;
+
+    latitude = Double.parseDouble(dangerLocation.split(",")[0]);
+    longitude = Double.parseDouble(dangerLocation.split(",")[1]);
+
+    danger = new Coordinates(latitude, longitude);
+
+
+    // check to see which teams are too close to the danger
     for (Map.Entry<String, String> entry: teamLocation.entrySet()) {
 
       location = entry.getValue();
       team = entry.getKey();
 
-      teamCoordinates = new Coordinates(Double.parseDouble(location.split(",")[0]), Double.parseDouble(location.split(",")[1]));
+      // get the coordinates
+      latitude = Double.parseDouble(location.split(",")[0]);
+      longitude = Double.parseDouble(location.split(",")[1]);
 
+      teamCoordinates = new Coordinates(latitude, longitude);
       distance = sdk.getLocationService().distanceBetween(teamCoordinates, danger);
 
+
+      // check to see if the team needs to moved
       if (distance < 1000) {
 
         direction = sdk.getLocationService().directionTo(teamCoordinates, danger);
@@ -216,16 +215,16 @@ public class EventAppService {
 
         sdk.getCommunicationService().moveTo(team, opposite, 1000);
       }
-
     }
   }
 
 
-  private boolean hasFoundResourse(String resource){
+  // Check to see if the resource has been encountered before.
+  private boolean hasFoundResource (String resource){
 
     //loops through the arrayList and compares the resources
-    for(int i = 0; i < resources.size(); i ++){
-      if(resources.get(i).getType().equals(resource)){
+    for (ResourceObject resource1 : resources) {
+      if (resource1.getType().equals(resource)) {
         return true;
       }
     }
@@ -233,12 +232,10 @@ public class EventAppService {
     return false;
   }
 
-
   // helper function that will tell you what direction the team should move in.
   private Direction getOppositeDirection (Direction direction){
 
     switch(direction){
-
       case NORTH:
         return Direction.SOUTH;
       case SOUTH:
@@ -259,7 +256,6 @@ public class EventAppService {
         return Direction.NONE;
     }
   }
-
 }
 
 
