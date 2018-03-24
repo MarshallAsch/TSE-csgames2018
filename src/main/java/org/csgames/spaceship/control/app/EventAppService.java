@@ -36,6 +36,14 @@ public class EventAppService {
           sdk.getSpaceshipService().sendWaterTo(eventDto.source, 10);
 
         break;
+
+      case "OUT_OF_SUPPLIES":
+
+        sdk.getSpaceshipService().sendFishTo(eventDto.source, 20);
+
+        sdk.getSpaceshipService().sendWaterTo(eventDto.source, 15);
+
+        break;
       default:
         // none
     }
