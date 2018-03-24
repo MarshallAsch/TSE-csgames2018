@@ -13,7 +13,7 @@ import java.util.*;
 public class EventAppService {
 
   private SpaceshipSdk sdk;
-  private DataStorage dataStorage = new DataStorage();
+  private DataStorage dataStorage = new LocalStorage();
 
   public EventAppService(SpaceshipSdk sdk) {
     this.sdk = sdk;
