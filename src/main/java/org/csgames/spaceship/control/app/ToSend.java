@@ -9,5 +9,6 @@ public class ToSend {
   public ToSend(String team, Coordinates location) {
     this.team = team;
     this.coordinates = location;
+
   }
 }

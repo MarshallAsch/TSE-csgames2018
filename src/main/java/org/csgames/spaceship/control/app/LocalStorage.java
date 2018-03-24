@@ -156,7 +156,7 @@ public class LocalStorage implements DataStorage {
       }
     }
 
-    return new ToSend(team, location);
+     return team == null || location == null ? null: new ToSend(team, location);
   }
 
 }
