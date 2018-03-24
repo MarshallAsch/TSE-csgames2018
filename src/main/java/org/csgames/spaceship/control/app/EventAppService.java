@@ -4,9 +4,13 @@ import org.csgames.spaceship.sdk.SpaceshipSdk;
 import org.csgames.spaceship.sdk.service.PlanetRegistry;
 import org.csgames.spaceship.sdk.service.PlanetResourceService;
 
+import java.util.*;
+
 public class EventAppService {
 
   private SpaceshipSdk sdk;
+
+  private ArrayList<String> resources = new ArrayList<>();
 
   public EventAppService(SpaceshipSdk sdk) {
     // FIXME: Use the sdk to retrieve the available services we made for you
@@ -18,6 +22,7 @@ public class EventAppService {
 
   public void handleReceivedEvent(EventDto eventDto) {
     // FIXME: Implement core logic to handle received events
+      Boolean foundResource = false;
       int remainingFish = 0;
       int remainingWater = 0;
 
@@ -25,10 +30,19 @@ public class EventAppService {
       switch (eventDto.type) {
 
         case "RESOURCE_DISCOVERED":
-          //Set a variable?
+          //Set a variable
 
+          //loops through the arraylist and compares the resources
+          for(int i = 0; i < resources.size(); i ++){
+            if(resources.get(i).equals(eventDto.source)){
+              foundResource = true;
+            }
+          }
 
-          sdk.getPlanetResourceService().registerResource(PlanetRegistry.CLASS_M, eventDto.source);
+          if(!foundResource) {
+            resources.add(eventDto.source);
+            sdk.getPlanetResourceService().registerResource(PlanetRegistry.CLASS_M, eventDto.source);
+          }
           break;
 
         case "SUPPLY_CONSUMED":
