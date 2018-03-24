@@ -1,7 +1,7 @@
 package org.csgames.spaceship.control.app;
 
 import org.csgames.spaceship.sdk.Coordinates;
-
+import org.csgames.spaceship.sdk.SpaceshipSdk;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -109,4 +109,54 @@ public class LocalStorage implements DataStorage {
     }
     return null;
   }
+
+
+  public Coordinates stringToCoordinates(String location) {
+    double latitude;
+    double longitude;
+
+    latitude = Double.parseDouble(location.split(",")[0]);
+    longitude = Double.parseDouble(location.split(",")[1]);
+
+    return new Coordinates(latitude, longitude);
+  }
+
+
+  public ToSend sendTeam(String type, SpaceshipSdk sdk){
+
+
+    double shortest = -1;
+    double tempDistacne = 0;
+
+    String team = null;
+    Coordinates location = null;
+
+    Coordinates tempCo;
+
+
+
+    for (Map.Entry<String,String> tempTeam : getAllTeamLocations()) {
+      tempCo = stringToCoordinates(tempTeam.getValue());
+      for (ResourceObject resource: resources) {
+
+        if (!resource.getType().equals(type)) {
+          continue;
+        }
+
+        // calc dist
+        tempDistacne = sdk.getLocationService().distanceBetween(tempCo, stringToCoordinates(resource.getLocation()));
+
+
+        if (tempDistacne < shortest || shortest == -1 ) {
+          shortest = tempDistacne;
+          location = stringToCoordinates(resource.getLocation());
+          team = tempTeam.getKey();
+
+        }
+      }
+    }
+
+    return new ToSend(team, location);
+  }
+
 }

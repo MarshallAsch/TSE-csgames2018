@@ -1,9 +1,8 @@
 package org.csgames.spaceship.control.app;
 
 import org.csgames.spaceship.sdk.Coordinates;
+import org.csgames.spaceship.sdk.SpaceshipSdk;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,4 +36,7 @@ public interface DataStorage {
 
   public Coordinates getFishLocation();
 
-}
+  public ToSend sendTeam(String type, SpaceshipSdk sdk);
+
+
+  }

@@ -55,17 +55,17 @@ public class EventAppService {
       sdk.getSpaceshipService().sendFishTo(event.source, 20);
     } catch (SpaceshipOutOfSuppliesException e) {
 
-      Coordinates fish = dataStorage.getFishLocation();
-      if (fish != null)
-      sdk.getCommunicationService().catchFish(event.source, fish);
+      ToSend toSend = dataStorage.sendTeam("Fish", sdk);
+      if (toSend != null)
+      sdk.getCommunicationService().catchFish(toSend.team, toSend.coordinates);
     }
 
     try {
       sdk.getSpaceshipService().sendWaterTo(event.source, 15);
     } catch (SpaceshipOutOfSuppliesException e) {
-      Coordinates water = dataStorage.getWaterLocation();
-      if (water != null)
-        sdk.getCommunicationService().refillWater (event.source, water);
+      ToSend toSend = dataStorage.sendTeam("Water", sdk);
+      if (toSend != null)
+        sdk.getCommunicationService().refillWater(toSend.team, toSend.coordinates);
     }
   }
 
@@ -88,10 +88,9 @@ public class EventAppService {
       try{
         sdk.getSpaceshipService().sendFishTo(event.source, 15);
       } catch (SpaceshipOutOfSuppliesException e) {
-        Coordinates fish = dataStorage.getFishLocation();
-        if (fish != null)
-
-          sdk.getCommunicationService().catchFish(event.source, fish);
+        ToSend toSend = dataStorage.sendTeam("Fish", sdk);
+        if (toSend != null)
+          sdk.getCommunicationService().catchFish(toSend.team, toSend.coordinates);
       }
     }
 
@@ -101,9 +100,9 @@ public class EventAppService {
         sdk.getSpaceshipService().sendWaterTo(event.source, 10);
       } catch (SpaceshipOutOfSuppliesException e) {
 
-        Coordinates water = dataStorage.getWaterLocation();
-        if (water != null)
-          sdk.getCommunicationService().refillWater (event.source, water);
+        ToSend toSend = dataStorage.sendTeam("Water", sdk);
+        if (toSend != null)
+          sdk.getCommunicationService().refillWater(toSend.team, toSend.coordinates);
       }
 
     }
