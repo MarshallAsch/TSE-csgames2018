@@ -199,7 +199,6 @@ public class EventAppService {
       if (room.type.equals("habitable"))
       {
         // temp is now in C
-
         if (tempature > -10) {
           sdk.getSpaceshipService().openDoor(room.roomNumber);
           sdk.getSpaceshipService().openVent(room.roomNumber);
@@ -209,7 +208,6 @@ public class EventAppService {
           sdk.getSpaceshipService().closeDoor(room.roomNumber);
           sdk.getSpaceshipService().closeVent(room.roomNumber);
         }
-
 
         if (tempature > 0) {
           sdk.getSpaceshipService().openAirConditioning(room.roomNumber);
@@ -234,7 +232,6 @@ public class EventAppService {
         }
       }
     }
-
   }
 
   // helper function that will tell you what direction the team should move in.
