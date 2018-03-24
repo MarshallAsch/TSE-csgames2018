@@ -13,16 +13,8 @@ import java.util.*;
 public class EventAppService {
 
   private SpaceshipSdk sdk;
+  private DataStorage dataStorage = new DataStorage();
 
-  // This is the HashMap for the telemetry data
-  private HashMap<String, String> telemetry = new HashMap<>();
-
-  // this is the ArrayList that will store the locations of resources
-  private ArrayList<ResourceObject> resources = new ArrayList<>();
-
-  // the locations of all of the teams
-  private HashMap<String, String> teamLocation = new HashMap<>();
-  
   public EventAppService(SpaceshipSdk sdk) {
     this.sdk = sdk;
   }
@@ -60,22 +52,6 @@ public class EventAppService {
     }
 
 
-  // this will generate the key for the HashMap for storing telemetry
-  private @NonNull String genTelemetryKey(EventDto event) {
-
-    String type = event.type;
-    String team = event.source;
-    String[] data =  event.payload.split("=");
-
-    String key = data.length == 0 ? "" : data[0];
-
-
-    String hashKey = type + team + key;
-
-    return hashKey;
-
-  }
-
   // This will send 20 fish and 15 units water
   private void handleOutOfSupplies (EventDto event) {
 
@@ -110,22 +86,12 @@ public class EventAppService {
   // will lof event types when one is received if it updates or if it is new
   private void handleTelemetry(EventDto event) {
 
-    String dataKey = genTelemetryKey(event);
-
     // save the data
     String dataName = event.payload.split("=")[0];
+    String dataValue = event.payload.split("=")[1];
 
-    if (telemetry.containsKey(dataKey) && telemetry.get(dataKey).equals(dataName)) {
-      // the data is already there do nothing
-    }
-    else if (telemetry.containsKey(dataKey) && !telemetry.get(dataKey).equals(dataName)) {
-      // the data is already there the value needs to be updated
+    if (dataStorage.recordTelemetry(event.source, dataName, dataValue)) {
       sdk.getAwayTeamLogService().reportMeasureData(event.source, dataName);
-      telemetry.replace(dataKey, event.payload);
-    }
-    else {
-      sdk.getAwayTeamLogService().reportMeasureData(event.source, dataName);
-      telemetry.put(dataKey, event.payload);
     }
   }
 
@@ -133,25 +99,24 @@ public class EventAppService {
   // when a new resource is discovered, add it to the log and save its location
   private void handleResourcesDiscovered (EventDto event) {
 
-    Boolean foundResource = hasFoundResource(event.source);
+    Boolean foundResource = dataStorage.hasFoundResource(event.source);
 
     if(!foundResource) {
-      resources.add(new ResourceObject(event.source, event.payload));
+      dataStorage.foundResource(new ResourceObject(event.source, event.payload));
       sdk.getPlanetResourceService().registerResource(PlanetRegistry.CLASS_M, event.source);
     }
   }
 
-  // Handel teh event when a team moves
+  // handle the event when a team moves
   private void handleTrackLocation(EventDto event) {
 
     String team = event.source;
     String location  = event.payload;
 
-    String lastLocation = getLastLocation(team);
+    String lastLocation = dataStorage.getLastLocation(team);
 
     if (lastLocation.equals("")) {
       // new location
-      teamLocation.put(team, location);
     }
     else if (lastLocation.equals(location)) {
       // same location
@@ -160,20 +125,18 @@ public class EventAppService {
     else {
       // moved
       sdk.getAwayTeamLogService().reportStatus(team, TeamStatus.MOVING);
-      teamLocation.replace(team, location);
     }
+
+    // update the location of the team
+    dataStorage.updateTeamLocation(team, location);
   }
 
-
-  private String getLastLocation(String team) {
-
-    return teamLocation.getOrDefault(team, "");
-  }
 
   private void handleDanger(EventDto event){
     teamsInRange(event.payload);
   }
 
+  // This will send the instruction to all of the teams that are within range of the danger
   private void teamsInRange(String dangerLocation) {
 
     String location;
@@ -194,7 +157,7 @@ public class EventAppService {
 
 
     // check to see which teams are too close to the danger
-    for (Map.Entry<String, String> entry: teamLocation.entrySet()) {
+    for (Map.Entry<String, String> entry: dataStorage.getAllTeamLocations()) {
 
       location = entry.getValue();
       team = entry.getKey();
@@ -216,20 +179,6 @@ public class EventAppService {
         sdk.getCommunicationService().moveTo(team, opposite, 1000);
       }
     }
-  }
-
-
-  // Check to see if the resource has been encountered before.
-  private boolean hasFoundResource (String resource){
-
-    //loops through the arrayList and compares the resources
-    for (ResourceObject resource1 : resources) {
-      if (resource1.getType().equals(resource)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   // helper function that will tell you what direction the team should move in.
