@@ -1,12 +1,10 @@
 package org.csgames.spaceship.control.app;
 
-import lombok.NonNull;
 import org.csgames.spaceship.sdk.Coordinates;
 import org.csgames.spaceship.sdk.Direction;
 import org.csgames.spaceship.sdk.SpaceshipSdk;
 import org.csgames.spaceship.sdk.service.PlanetRegistry;
 import org.csgames.spaceship.sdk.service.TeamStatus;
-import java.util.HashMap;
 import java.util.*;
 
 
@@ -20,9 +18,6 @@ public class EventAppService {
   }
 
   public void handleReceivedEvent(EventDto eventDto) {
-
-    // FIXME: Implement core logic to handle received events
-
     switch (eventDto.type) {
 
       case "RESOURCE_DISCOVERED":
@@ -62,7 +57,6 @@ public class EventAppService {
   // This will send more supplies to the penguins when they are needed
   private void handleSuppliesConsumed (EventDto event)
   {
-
     String[] parts = event.payload.split(",");
 
     // make sure that the parts has values
@@ -131,7 +125,6 @@ public class EventAppService {
     dataStorage.updateTeamLocation(team, location);
   }
 
-
   private void handleDanger(EventDto event){
     teamsInRange(event.payload);
   }
@@ -154,7 +147,6 @@ public class EventAppService {
     longitude = Double.parseDouble(dangerLocation.split(",")[1]);
 
     danger = new Coordinates(latitude, longitude);
-
 
     // check to see which teams are too close to the danger
     for (Map.Entry<String, String> entry: dataStorage.getAllTeamLocations()) {
