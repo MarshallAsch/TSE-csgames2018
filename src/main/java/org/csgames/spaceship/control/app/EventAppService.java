@@ -2,29 +2,58 @@ package org.csgames.spaceship.control.app;
 
 import lombok.NonNull;
 import org.csgames.spaceship.sdk.SpaceshipSdk;
+
 import org.csgames.spaceship.sdk.service.AwayTeamLogService;
 import org.csgames.spaceship.sdk.service.PlanetRegistry;
 
 import java.util.HashMap;
+import org.csgames.spaceship.sdk.service.PlanetRegistry;
+import org.csgames.spaceship.sdk.service.PlanetResourceService;
+
+import java.util.*;
 
 public class EventAppService {
 
   private SpaceshipSdk sdk;
 
+
+  private ArrayList<String> resources = new ArrayList<>();
+
   public EventAppService(SpaceshipSdk sdk) {
     this.sdk = sdk;
+
+
   }
 
   private HashMap<String, String> telemetry = new HashMap<>();
 
   public void handleReceivedEvent(EventDto eventDto) {
 
-    int remainingFish = 0;
-    int remainingWater = 0;
+    // FIXME: Implement core logic to handle received events
+      Boolean foundResource = false;
+      int remainingFish = 0;
+      int remainingWater = 0;
+
+
 
 
     switch (eventDto.type) {
 
+      case "RESOURCE_DISCOVERED":
+        //Set a variable
+
+        //loops through the arraylist and compares the resources
+        for(int i = 0; i < resources.size(); i ++){
+          if(resources.get(i).equals(eventDto.source)){
+            foundResource = true;
+          }
+        }
+
+        if(!foundResource) {
+          resources.add(eventDto.source);
+          sdk.getPlanetResourceService().registerResource(PlanetRegistry.CLASS_M, eventDto.source);
+        }
+        break;
       case "DATA_MEASURED":
 
         String dataKey = genTelemetryKey(eventDto);
@@ -50,10 +79,14 @@ public class EventAppService {
         break;
       case "SUPPLY_CONSUMED":
 
-        String[] parts = eventDto.payload.split(",");
+          String[] parts = eventDto.payload.split(",");
 
         // make sure that the parts has values
         if (parts.length != 2) {
+          parts = new String[]{"0", "0"};
+        }
+
+        if (parts == null || parts.length == 0) {
           parts = new String[]{"0", "0"};
         }
 
@@ -67,20 +100,18 @@ public class EventAppService {
         // send water if needed
         if (remainingWater < 2)
           sdk.getSpaceshipService().sendWaterTo(eventDto.source, 10);
+          break;
 
-        break;
+        case "OUT_OF_SUPPLIES":
+          // send supplies to starving penguins.
+          sdk.getSpaceshipService().sendFishTo(eventDto.source, 20);
+          sdk.getSpaceshipService().sendWaterTo(eventDto.source, 15);
 
-      case "OUT_OF_SUPPLIES":
-
-        // send supplies to starving penguins.
-        sdk.getSpaceshipService().sendFishTo(eventDto.source, 20);
-        sdk.getSpaceshipService().sendWaterTo(eventDto.source, 15);
-
-        break;
-      default:
-        // none
+          break;
+        default:
+          // none
+      }
     }
-  }
 
 
   // this will generate the key for the hashmap for storing telemtry
